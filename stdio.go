@@ -6,21 +6,31 @@ import (
 	"os"
 )
 
-type StdoutContext struct {
+type Pipe struct {
 	old  *os.File
 	outC chan string
 	//r    *os.File
-	w *os.File
+	w      *os.File
+	assign func(f *os.File)
 }
 
-func PipeStdout() (*StdoutContext, error) {
-	var c StdoutContext
-	c.old = os.Stdout
+func PipeStdout() (*Pipe, error) {
+	return pipe(func(c *Pipe) {
+		c.old = os.Stdout
+	}, func(f *os.File) {
+		os.Stdout = f
+	})
+}
+
+func pipe(save func(c *Pipe), assign func(f *os.File)) (*Pipe, error) {
+	var c Pipe
+	save(&c)
 	r, w, err := os.Pipe()
 	if err != nil {
 		return nil, err
 	}
-	os.Stdout = w
+	c.assign = assign
+	c.assign(w)
 	//c.r = r
 	c.w = w
 
@@ -33,9 +43,9 @@ func PipeStdout() (*StdoutContext, error) {
 	return &c, nil
 }
 
-func (c *StdoutContext) Close() string {
+func (c *Pipe) Close() string {
 	c.w.Close()
-	os.Stdout = c.old
+	c.assign(c.old)
 	out := <-c.outC
 	return out
 }

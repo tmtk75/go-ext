@@ -13,7 +13,7 @@ type StdoutContext struct {
 	w *os.File
 }
 
-func CaptureStdout() (*StdoutContext, error) {
+func PipeStdout() (*StdoutContext, error) {
 	var c StdoutContext
 	c.old = os.Stdout
 	r, w, err := os.Pipe()
@@ -33,7 +33,7 @@ func CaptureStdout() (*StdoutContext, error) {
 	return &c, nil
 }
 
-func (c *StdoutContext) End() string {
+func (c *StdoutContext) Close() string {
 	c.w.Close()
 	os.Stdout = c.old
 	out := <-c.outC

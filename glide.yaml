@@ -1,0 +1,5 @@
+package: github.com/tmtk75/go-ext
+import:
+- package: golang.org/x/crypto
+  subpackages:
+  - /ssh/terminal
